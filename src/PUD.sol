@@ -10,6 +10,11 @@ abstract contract PUD is ERC20 {
     address private bookkeeper;
     address private treasurer;
 
+    modifier financiersOnly() {
+        require(msg.sender == bookkeeper || msg.sender == treasurer, "PUD: financiers only");
+        _;
+    }
+
     constructor(string memory _name, string memory _symbol, address _registra) ERC20(_name, _symbol) {
         REGISTRA = Registra(_registra);
         REGISTRA.registerPUD(address(this));
@@ -18,5 +23,13 @@ abstract contract PUD is ERC20 {
     function initialize() external {
         bookkeeper = REGISTRA.bookkeeper();
         treasurer = REGISTRA.treasurer();
+    }
+
+    function mint(uint256 amount) external financiersOnly {
+        _mint(msg.sender, amount);
+    }
+
+    function burn(uint256 amount) external financiersOnly {
+        _burn(msg.sender, amount);
     }
 }
