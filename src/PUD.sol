@@ -25,11 +25,11 @@ abstract contract PUD is ERC20 {
         treasurer = REGISTRA.treasurer();
     }
 
-    function mint(uint256 amount) external financiersOnly {
-        _mint(msg.sender, amount);
+    function mint(uint256 _amount) external financiersOnly {
+        _mint(msg.sender, _amount);
     }
 
-    function burn(uint256 amount) external financiersOnly {
-        _burn(msg.sender, amount);
+    function burn(uint256 _amount) external financiersOnly {
+        _burn(msg.sender, _amount);
     }
 }
