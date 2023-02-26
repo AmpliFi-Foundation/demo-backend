@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19;
 
+import {UD60x18} from "@prb-math/UD60x18.sol";
 import {TokenInfo} from "./structs/TokenInfo.sol";
 import {Stewardable} from "./utils/Stewardable.sol";
 
@@ -8,8 +9,8 @@ contract Registra is Stewardable {
     address private s_bookkeeper;
     address private s_pud;
     address private s_treasurer;
-    uint256 private s_interestRateDx18;
-    uint256 private s_penaltyRateDx18;
+    UD60x18 private s_interestRate;
+    UD60x18 private s_penaltyRate;
     mapping(address => TokenInfo) private s_tokenInfos;
 
     modifier zeroAddressOnly(address address_) {
@@ -31,12 +32,12 @@ contract Registra is Stewardable {
         s_treasurer = treasurer;
     }
 
-    function setInterestRate(uint256 interestRateDx18) external stewardOnly {
-        s_interestRateDx18 = interestRateDx18;
+    function setInterestRate(UD60x18 interestRate) external stewardOnly {
+        s_interestRate = interestRate;
     }
 
-    function setPenaltyRate(uint256 penaltyRateDx18) external stewardOnly {
-        s_penaltyRateDx18 = penaltyRateDx18;
+    function setPenaltyRate(UD60x18 penaltyRate) external stewardOnly {
+        s_penaltyRate = penaltyRate;
     }
 
     function setTokenInfo(address token, TokenInfo calldata tokenInfo) external stewardOnly {
@@ -55,12 +56,12 @@ contract Registra is Stewardable {
         treasurer = s_treasurer;
     }
 
-    function getInterestRate() external view returns (uint256 interestRateDx18) {
-        interestRateDx18 = s_interestRateDx18;
+    function getInterestRate() external view returns (UD60x18 interestRate) {
+        interestRate = s_interestRate;
     }
 
-    function getPenaltyRate() external view returns (uint256 penaltyRateDx18) {
-        penaltyRateDx18 = s_penaltyRateDx18;
+    function getPenaltyRate() external view returns (UD60x18 penaltyRate) {
+        penaltyRate = s_penaltyRate;
     }
 
     function tokenInfoOf(address token) external view returns (TokenInfo memory tokenInfo) {
