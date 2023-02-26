@@ -4,17 +4,17 @@ pragma solidity >=0.8.19;
 import {Registra} from "./Registra.sol";
 
 contract Treasurer {
-    Registra private immutable REGISTRA;
-    address private bookkeeper;
-    address private pud;
+    Registra private immutable s_REGISTRA;
+    address private s_bookkeeper;
+    address private s_pud;
 
-    constructor(address _registra) {
-        REGISTRA = Registra(_registra);
-        REGISTRA.registerBookkeeper(address(this));
+    constructor(address registra) {
+        s_REGISTRA = Registra(registra);
+        s_REGISTRA.setTreasurer(address(this));
     }
 
     function initialize() external {
-        bookkeeper = REGISTRA.bookkeeper();
-        pud = REGISTRA.pud();
+        s_bookkeeper = s_REGISTRA.getBookkeeper();
+        s_pud = s_REGISTRA.getPud();
     }
 }

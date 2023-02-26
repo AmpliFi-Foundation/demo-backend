@@ -2,29 +2,29 @@
 pragma solidity >=0.8.19;
 
 contract Stewardable {
-    address private steward;
-    address private successor;
+    address private s_steward;
+    address private s_successor;
 
     modifier stewardOnly() {
-        require(msg.sender == steward, "Steward only");
+        require(msg.sender == s_steward, "Steward only");
         _;
     }
 
     modifier successorOnly() {
-        require(msg.sender == successor, "Successor only");
+        require(msg.sender == s_successor, "Successor only");
         _;
     }
 
-    constructor(address _steward) {
-        steward = _steward;
+    constructor(address steward) {
+        s_steward = steward;
     }
 
     function succeedSteward() external successorOnly {
-        steward = successor;
-        successor = address(0);
+        s_steward = s_successor;
+        s_successor = address(0);
     }
 
-    function appointSuccessor(address _successor) external stewardOnly {
-        successor = _successor;
+    function appointSuccessor(address successor) external stewardOnly {
+        s_successor = successor;
     }
 }

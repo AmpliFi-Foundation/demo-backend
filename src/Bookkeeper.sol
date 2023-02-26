@@ -6,49 +6,48 @@ import {Position} from "./structs/Position.sol";
 import {Registra} from "./Registra.sol";
 
 contract Bookkeeper is ERC721 {
-    Registra private immutable REGISTRA;
-    address private pud;
-    address private treasurer;
+    Registra private immutable s_REGISTRA;
+    address private s_pud;
+    address private s_treasurer;
+    uint256 private s_lastPositionId;
+    mapping(uint256 => Position) private s_positions;
 
-    uint256 private lastPositionId;
-    mapping(uint256 => Position) private positions;
-
-    modifier ownerOrOperatorOnly(address _owner) {
-        require(msg.sender == _owner || isApprovedForAll(_owner, msg.sender), "Bookkeeper: owner or operator only");
+    modifier ownerOrOperatorOnly(address owner) {
+        require(msg.sender == owner || isApprovedForAll(owner, msg.sender), "Bookkeeper: owner or operator only");
         _;
     }
 
-    modifier existingPositionOnly(uint256 _positionId) {
-        require(_exists(_positionId), "Bookkeeper: require existing _position");
+    modifier existingPositionOnly(uint256 positionId) {
+        require(_exists(positionId), "Bookkeeper: require existing position");
         _;
     }
 
-    constructor(string memory _name, string memory _symbol, address _registra) ERC721(_name, _symbol) {
-        REGISTRA = Registra(_registra);
-        REGISTRA.registerBookkeeper(address(this));
+    constructor(string memory name, string memory symbol, address registra) ERC721(name, symbol) {
+        s_REGISTRA = Registra(registra);
+        s_REGISTRA.setBookkeeper(address(this));
     }
 
     function initialize() external {
-        pud = REGISTRA.pud();
-        treasurer = REGISTRA.treasurer();
+        s_pud = s_REGISTRA.getPud();
+        s_treasurer = s_REGISTRA.getTreasurer();
     }
 
-    function mint(address _recipient) external ownerOrOperatorOnly(_recipient) returns (uint256 _positionId) {
-        _positionId = ++lastPositionId;
-        _safeMint(_recipient, _positionId);
+    function mint(address recipient) external ownerOrOperatorOnly(recipient) returns (uint256 positionId) {
+        positionId = ++s_lastPositionId;
+        _safeMint(recipient, positionId);
     }
 
-    function burn(uint256 _positionId)
+    function burn(uint256 positionId)
         external
-        existingPositionOnly(_positionId)
-        ownerOrOperatorOnly(ownerOf(_positionId))
+        existingPositionOnly(positionId)
+        ownerOrOperatorOnly(ownerOf(positionId))
     {
-        Position storage _position = positions[_positionId];
-        require(_position.erc20Tokens.length == 0 && _position.erc721Tokens.length == 0, "Bookkeeper: not asset free");
-        require(_position.realDebt == 0 && _position.nominalDebt == 0, "Bookkeeper: not debt free");
+        Position storage s_position = s_positions[positionId];
+        require(s_position.erc20Tokens.length == 0 && s_position.erc721Tokens.length == 0, "Bookkeeper: not asset free");
+        require(s_position.realDebt == 0 && s_position.nominalDebt == 0, "Bookkeeper: not debt free");
 
-        delete positions[_positionId];
-        _burn(_positionId);
+        delete s_positions[positionId];
+        _burn(positionId);
     }
 
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {

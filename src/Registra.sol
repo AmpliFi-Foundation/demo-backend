@@ -5,46 +5,65 @@ import {TokenInfo} from "./structs/TokenInfo.sol";
 import {Stewardable} from "./utils/Stewardable.sol";
 
 contract Registra is Stewardable {
-    address public bookkeeper;
-    address public pud;
-    address public treasurer;
-    uint256 public interestRateDx18;
-    uint256 public penaltyRateDx18;
+    address private s_bookkeeper;
+    address private s_pud;
+    address private s_treasurer;
+    uint256 private s_interestRateDx18;
+    uint256 private s_penaltyRateDx18;
+    mapping(address => TokenInfo) private s_tokenInfos;
 
-    mapping(address => TokenInfo) private tokenInfos;
-
-    modifier zeroAddressOnly(address _address) {
-        require(_address == address(0), "Registra: zero address only");
+    modifier zeroAddressOnly(address address_) {
+        require(address_ == address(0), "Registra: zero address only");
         _;
     }
 
-    constructor(address _initialSteward) Stewardable(_initialSteward) {}
+    constructor(address steward) Stewardable(steward) {}
 
-    function registerBookkeeper(address _bookkeeper) external zeroAddressOnly(bookkeeper) {
-        bookkeeper = _bookkeeper;
+    function setBookkeeper(address bookkeeper) external zeroAddressOnly(s_bookkeeper) {
+        s_bookkeeper = bookkeeper;
     }
 
-    function registerPUD(address _pud) external zeroAddressOnly(pud) {
-        pud = _pud;
+    function setPud(address pud) external zeroAddressOnly(s_pud) {
+        s_pud = pud;
     }
 
-    function registerTreasurer(address _treasurer) external zeroAddressOnly(treasurer) {
-        treasurer = _treasurer;
+    function setTreasurer(address treasurer) external zeroAddressOnly(s_treasurer) {
+        s_treasurer = treasurer;
     }
 
-    function setInterestRateDx18(uint256 _interestRateDx18) external stewardOnly {
-        interestRateDx18 = _interestRateDx18;
+    function setInterestRate(uint256 interestRateDx18) external stewardOnly {
+        s_interestRateDx18 = interestRateDx18;
     }
 
-    function setPenaltyRateDx18(uint256 _penaltyRateDx18) external stewardOnly {
-        penaltyRateDx18 = _penaltyRateDx18;
+    function setPenaltyRate(uint256 penaltyRateDx18) external stewardOnly {
+        s_penaltyRateDx18 = penaltyRateDx18;
     }
 
-    function setTokenInfo(address _token, TokenInfo calldata _tokenInfo) external stewardOnly {
-        tokenInfos[_token] = _tokenInfo;
+    function setTokenInfo(address token, TokenInfo calldata tokenInfo) external stewardOnly {
+        s_tokenInfos[token] = tokenInfo;
     }
 
-    function tokenInfoOf(address _token) external view returns (TokenInfo memory _tokenInfo) {
-        _tokenInfo = tokenInfos[_token];
+    function getBookkeeper() external view returns (address bookkeeper) {
+        bookkeeper = s_bookkeeper;
+    }
+
+    function getPud() external view returns (address pud) {
+        pud = s_pud;
+    }
+
+    function getTreasurer() external view returns (address treasurer) {
+        treasurer = s_treasurer;
+    }
+
+    function getInterestRate() external view returns (uint256 interestRateDx18) {
+        interestRateDx18 = s_interestRateDx18;
+    }
+
+    function getPenaltyRate() external view returns (uint256 penaltyRateDx18) {
+        penaltyRateDx18 = s_penaltyRateDx18;
+    }
+
+    function tokenInfoOf(address token) external view returns (TokenInfo memory tokenInfo) {
+        tokenInfo = s_tokenInfos[token];
     }
 }
