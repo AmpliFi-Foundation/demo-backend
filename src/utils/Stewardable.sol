@@ -5,13 +5,13 @@ contract Stewardable {
     address private s_steward;
     address private s_successor;
 
-    modifier stewardOnly() {
-        require(msg.sender == s_steward, "Steward only");
+    modifier requireSteward() {
+        require(msg.sender == s_steward, "Require steward");
         _;
     }
 
-    modifier successorOnly() {
-        require(msg.sender == s_successor, "Successor only");
+    modifier requireSuccessor() {
+        require(msg.sender == s_successor, "Require successor");
         _;
     }
 
@@ -19,12 +19,12 @@ contract Stewardable {
         s_steward = steward;
     }
 
-    function succeedSteward() external successorOnly {
+    function succeedSteward() external requireSuccessor {
         s_steward = s_successor;
         s_successor = address(0);
     }
 
-    function appointSuccessor(address successor) external stewardOnly {
+    function appointSuccessor(address successor) external requireSteward {
         s_successor = successor;
     }
 }

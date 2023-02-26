@@ -13,34 +13,34 @@ contract Registra is Stewardable {
     UD60x18 private s_penaltyRate;
     mapping(address => TokenInfo) private s_tokenInfos;
 
-    modifier zeroAddressOnly(address address_) {
-        require(address_ == address(0), "Registra: zero address only");
+    modifier requireZeroAddress(address address_) {
+        require(address_ == address(0), "Registra: require zero address");
         _;
     }
 
     constructor(address steward) Stewardable(steward) {}
 
-    function setBookkeeper(address bookkeeper) external zeroAddressOnly(s_bookkeeper) {
+    function setBookkeeper(address bookkeeper) external requireZeroAddress(s_bookkeeper) {
         s_bookkeeper = bookkeeper;
     }
 
-    function setPud(address pud) external zeroAddressOnly(s_pud) {
+    function setPud(address pud) external requireZeroAddress(s_pud) {
         s_pud = pud;
     }
 
-    function setTreasurer(address treasurer) external zeroAddressOnly(s_treasurer) {
+    function setTreasurer(address treasurer) external requireZeroAddress(s_treasurer) {
         s_treasurer = treasurer;
     }
 
-    function setInterestRate(UD60x18 interestRate) external stewardOnly {
+    function setInterestRate(UD60x18 interestRate) external requireSteward {
         s_interestRate = interestRate;
     }
 
-    function setPenaltyRate(UD60x18 penaltyRate) external stewardOnly {
+    function setPenaltyRate(UD60x18 penaltyRate) external requireSteward {
         s_penaltyRate = penaltyRate;
     }
 
-    function setTokenInfo(address token, TokenInfo calldata tokenInfo) external stewardOnly {
+    function setTokenInfo(address token, TokenInfo calldata tokenInfo) external requireSteward {
         s_tokenInfos[token] = tokenInfo;
     }
 

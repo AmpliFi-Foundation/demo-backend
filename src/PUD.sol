@@ -10,8 +10,8 @@ abstract contract PUD is ERC20 {
     address private s_bookkeeper;
     address private s_treasurer;
 
-    modifier financiersOnly() {
-        require(msg.sender == s_bookkeeper || msg.sender == s_treasurer, "PUD: financiers only");
+    modifier requireFinanciers() {
+        require(msg.sender == s_bookkeeper || msg.sender == s_treasurer, "PUD: require financiers");
         _;
     }
 
@@ -25,11 +25,11 @@ abstract contract PUD is ERC20 {
         s_treasurer = s_REGISTRA.getTreasurer();
     }
 
-    function mint(uint256 amount) external financiersOnly {
+    function mint(uint256 amount) external requireFinanciers {
         _mint(msg.sender, amount);
     }
 
-    function burn(uint256 amount) external financiersOnly {
+    function burn(uint256 amount) external requireFinanciers {
         _burn(msg.sender, amount);
     }
 }

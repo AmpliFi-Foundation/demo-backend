@@ -12,13 +12,13 @@ contract Bookkeeper is ERC721 {
     uint256 private s_lastPositionId;
     mapping(uint256 => Position) private s_positions;
 
-    modifier ownerOrOperatorOnly(address owner) {
-        require(msg.sender == owner || isApprovedForAll(owner, msg.sender), "Bookkeeper: owner or operator only");
+    modifier requireOwnerOrOperator(address owner) {
+        require(msg.sender == owner || isApprovedForAll(owner, msg.sender), "Bookkeeper: require owner or operator");
         _;
     }
 
-    modifier existingPositionOnly(uint256 positionId) {
-        require(_exists(positionId), "Bookkeeper: require existing position");
+    modifier requirePosition(uint256 positionId) {
+        require(_exists(positionId), "Bookkeeper: require position");
         _;
     }
 
@@ -32,15 +32,15 @@ contract Bookkeeper is ERC721 {
         s_treasurer = s_REGISTRA.getTreasurer();
     }
 
-    function mint(address recipient) external ownerOrOperatorOnly(recipient) returns (uint256 positionId) {
+    function mint(address recipient) external requireOwnerOrOperator(recipient) returns (uint256 positionId) {
         positionId = ++s_lastPositionId;
         _safeMint(recipient, positionId);
     }
 
     function burn(uint256 positionId)
         external
-        existingPositionOnly(positionId)
-        ownerOrOperatorOnly(ownerOf(positionId))
+        requirePosition(positionId)
+        requireOwnerOrOperator(ownerOf(positionId))
     {
         Position storage s_position = s_positions[positionId];
         require(s_position.erc20Tokens.length == 0 && s_position.erc721Tokens.length == 0, "Bookkeeper: not asset free");
