@@ -1,16 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19;
 
-import {ERC721} from "@openzeppelin-contracts/token/ERC721/ERC721.sol";
-import {Position} from "./structs/Position.sol";
+import {IERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC721, ERC721} from "@openzeppelin-contracts/token/ERC721/ERC721.sol";
+import {TokenInfo, TokenType} from "./structs/TokenInfo.sol";
+import {Position, PositionHelper} from "./utils/PositionHelper.sol";
 import {Registra} from "./Registra.sol";
 
 contract Bookkeeper is ERC721 {
+    using PositionHelper for Position;
+
     Registra private immutable s_REGISTRA;
     address private s_pud;
     address private s_treasurer;
     uint256 private s_lastPositionId;
     mapping(uint256 => Position) private s_positions;
+    mapping(address => uint256) private s_erc20TotalBalances;
+    mapping(address => mapping(uint256 => uint256)) private s_erc721Positions;
+
+    event DepositERC20(address indexed operator, uint256 indexed positionId, address token, uint256 amount);
+    event DepositERC721(address indexed operator, uint256 indexed positionId, address token, uint256 item);
 
     modifier requireOwnerOrOperator(address owner) {
         require(msg.sender == owner || isApprovedForAll(owner, msg.sender), "Bookkeeper: require owner or operator");
@@ -19,6 +28,13 @@ contract Bookkeeper is ERC721 {
 
     modifier requirePosition(uint256 positionId) {
         require(_exists(positionId), "Bookkeeper: require position");
+        _;
+    }
+
+    modifier requireToken(address token, TokenType tokenType) {
+        TokenInfo memory tokenInfo = s_REGISTRA.tokenInfoOf(token);
+        require(tokenInfo.enabled, "Bookkeeper: token not enabled");
+        require(tokenInfo.type_ == tokenType, "Bookkeeper: token is wrong type");
         _;
     }
 
@@ -35,6 +51,34 @@ contract Bookkeeper is ERC721 {
     function mint(address recipient) external requireOwnerOrOperator(recipient) returns (uint256 positionId) {
         positionId = ++s_lastPositionId;
         _safeMint(recipient, positionId);
+    }
+
+    function depositERC20(uint256 positionId, address token, uint256 amount)
+        external
+        requirePosition(positionId)
+        requireToken(token, TokenType.ERC20)
+    {
+        uint256 newBalance = s_erc20TotalBalances[token] + amount; //gas saving
+        require(IERC20(token).balanceOf(address(this)) >= newBalance, "Bookkeeper: insufficient ERC-20 token");
+
+        s_positions[positionId].addERC20(token, amount);
+        s_erc20TotalBalances[token] = newBalance;
+
+        emit DepositERC20(msg.sender, positionId, token, amount);
+    }
+
+    function depositERC721(uint256 positionId, address token, uint256 item)
+        external
+        requirePosition(positionId)
+        requireToken(token, TokenType.ERC721)
+    {
+        require(IERC721(token).ownerOf(item) == address(this), "Bookkeeper: missing ERC-721 token");
+        require(s_erc721Positions[token][item] == 0, "Bookkeeper: token already in a position");
+
+        s_positions[positionId].addERC721(token, item);
+        s_erc721Positions[token][item] = positionId;
+
+        emit DepositERC721(msg.sender, positionId, token, item);
     }
 
     function burn(uint256 positionId)
