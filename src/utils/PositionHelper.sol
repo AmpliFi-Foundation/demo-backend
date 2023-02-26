@@ -25,11 +25,11 @@ library PositionHelper {
         s_self.erc721Items[token].push(item);
     }
 
-    function addDebt(Position storage s_self, uint256 nominalAmount, UD60x18 rateCumulative)
+    function addDebt(Position storage s_self, uint256 nominalAmount, UD60x18 interestCumulative)
         internal
         returns (uint256 realAmount)
     {
-        realAmount = MathHelper.mulDivRoundUp(nominalAmount, uUNIT, unwrap(rateCumulative));
+        realAmount = MathHelper.mulDivRoundUp(nominalAmount, uUNIT, unwrap(interestCumulative));
         s_self.realDebt += realAmount;
         s_self.nominalDebt += nominalAmount;
     }
@@ -49,12 +49,12 @@ library PositionHelper {
         }
     }
 
-    function removeDebt(Position storage s_self, uint256 nominalAmount, UD60x18 rateCumulative)
+    function removeDebt(Position storage s_self, uint256 nominalAmount, UD60x18 interestCumulative)
         internal
         returns (uint256 realAmount)
     {
         uint256 nominalDebt = s_self.nominalDebt; //gas saving
-        realAmount = mulDiv(nominalAmount, uUNIT, unwrap(rateCumulative));
+        realAmount = mulDiv(nominalAmount, uUNIT, unwrap(interestCumulative));
         s_self.realDebt -= realAmount;
         s_self.nominalDebt = nominalAmount >= nominalDebt ? 0 : nominalDebt - nominalAmount;
     }

@@ -4,6 +4,7 @@ pragma solidity >=0.8.19;
 import {IERC20, SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721, ERC721} from "@openzeppelin-contracts/token/ERC721/ERC721.sol";
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
+import {UD60x18, UNIT, mul, powu} from "@prb-math/UD60x18.sol";
 import {IWithdrawERC20Callback} from "./interfaces/IWithdrawERC20Callback.sol";
 import {IWithdrawERC721Callback} from "./interfaces/IWithdrawERC721Callback.sol";
 import {TokenInfo, TokenType} from "./structs/TokenInfo.sol";
@@ -17,6 +18,9 @@ contract Bookkeeper is ERC721 {
     Registra private immutable s_REGISTRA;
     address private s_pud;
     address private s_treasurer;
+    uint256 private s_lastBlockTimestamp;
+    UD60x18 private s_interestCumulative;
+
     uint256 private s_lastPositionId;
     mapping(uint256 => Position) private s_positions;
     mapping(address => uint256) private s_erc20TotalBalances;
@@ -61,6 +65,8 @@ contract Bookkeeper is ERC721 {
     function initialize() external {
         s_pud = s_REGISTRA.getPud();
         s_treasurer = s_REGISTRA.getTreasurer();
+        s_lastBlockTimestamp = block.timestamp;
+        s_interestCumulative = UNIT;
     }
 
     function mint(address recipient) external requireOwnerOrOperator(recipient) returns (uint256 positionId) {
@@ -151,5 +157,16 @@ contract Bookkeeper is ERC721 {
 
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
         return this.onERC721Received.selector;
+    }
+
+    function getInterestCumulative() private returns (UD60x18 interestCumulative) {
+        uint256 timeElapsed = block.timestamp - s_lastBlockTimestamp;
+
+        if (timeElapsed > 0) {
+            s_interestCumulative = mul(s_interestCumulative, powu(s_REGISTRA.getInterestRate(), timeElapsed));
+            s_lastBlockTimestamp = block.timestamp;
+        }
+
+        interestCumulative = s_interestCumulative;
     }
 }
