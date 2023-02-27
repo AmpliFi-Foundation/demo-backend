@@ -4,11 +4,14 @@ pragma solidity >=0.8.19;
 import {IERC20, SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721, ERC721} from "@openzeppelin-contracts/token/ERC721/ERC721.sol";
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
-import {UD60x18, UNIT, mul, powu} from "@prb-math/UD60x18.sol";
+import {Math} from "@openzeppelin-contracts/utils/math/Math.sol";
+import {UD60x18, UNIT, unwrap, mul, mulDiv18, powu} from "@prb-math/UD60x18.sol";
+import {IBorrowCallback} from "./interfaces/IBorrowCallback.sol";
 import {IWithdrawERC20Callback} from "./interfaces/IWithdrawERC20Callback.sol";
 import {IWithdrawERC721Callback} from "./interfaces/IWithdrawERC721Callback.sol";
 import {TokenInfo, TokenType} from "./structs/TokenInfo.sol";
 import {Position, PositionHelper} from "./utils/PositionHelper.sol";
+import {PUD} from "./PUD.sol";
 import {Registra} from "./Registra.sol";
 
 contract Bookkeeper is ERC721 {
@@ -21,6 +24,7 @@ contract Bookkeeper is ERC721 {
     uint256 private s_lastBlockTimestamp;
     UD60x18 private s_interestCumulative;
 
+    uint256 private s_totalRealDebt;
     uint256 private s_lastPositionId;
     mapping(uint256 => Position) private s_positions;
     mapping(address => uint256) private s_erc20TotalBalances;
@@ -34,6 +38,8 @@ contract Bookkeeper is ERC721 {
     event WithdrawalERC721(
         address indexed operator, uint256 indexed positionId, address token, uint256 item, address recipient
     );
+    event Borrowing(address indexed operator, uint256 indexed positionId, uint256 amount);
+    event Repayment(address indexed operator, uint256 indexed positionId, uint256 principal, uint256 interest);
 
     modifier requireOwnerOrOperator(address owner) {
         require(msg.sender == owner || isApprovedForAll(owner, msg.sender), "Bookkeeper: require owner or operator");
@@ -79,11 +85,7 @@ contract Bookkeeper is ERC721 {
         requirePosition(positionId)
         requireToken(token, TokenType.ERC20)
     {
-        uint256 newBalance = s_erc20TotalBalances[token] + amount; //gas saving
-        require(IERC20(token).balanceOf(address(this)) >= newBalance, "Bookkeeper: insufficient ERC-20 deposit");
-
-        s_positions[positionId].addERC20(token, amount);
-        s_erc20TotalBalances[token] = newBalance;
+        depositERC20Core(s_positions[positionId], token, amount);
 
         emit DepositERC20(msg.sender, positionId, token, amount);
     }
@@ -109,11 +111,8 @@ contract Bookkeeper is ERC721 {
         requireOwnerOrOperator(ownerOf(positionId))
         requireNonzeroAddress(recipient)
     {
-        Position storage s_position = s_positions[positionId]; //gas saving
-        require(s_position.erc20Balances[token] >= amount, "Bookkeeper: insufficient ERC-20 balance");
-
-        s_position.removeERC20(token, amount);
-        s_erc20TotalBalances[token] -= amount;
+        Position storage s_position = s_positions[positionId];
+        withdrawERC20Core(s_position, token, amount);
         IERC20(token).safeTransfer(recipient, amount);
         if (Address.isContract(msg.sender)) {
             IWithdrawERC20Callback(msg.sender).withdrawERC20Callback(positionId, token, amount, recipient, data);
@@ -142,6 +141,47 @@ contract Bookkeeper is ERC721 {
         emit WithdrawalERC721(msg.sender, positionId, token, item, recipient);
     }
 
+    //TODO: need to ensure equity ratio >= liquidation ratio
+    function borrow(uint256 positionId, uint256 amount, bytes calldata data)
+        external
+        requirePosition(positionId)
+        requireOwnerOrOperator(ownerOf(positionId))
+    {
+        address pud = s_pud; //gas saving
+        Position storage s_position = s_positions[positionId];
+
+        s_totalRealDebt += s_position.addDebt(amount, getInterestCumulative());
+        PUD(pud).mint(amount);
+        depositERC20Core(s_position, pud, amount);
+        if (Address.isContract(msg.sender)) {
+            IBorrowCallback(msg.sender).borrowCallback(positionId, amount, data);
+        }
+
+        emit Borrowing(msg.sender, positionId, amount);
+    }
+
+    function repay(uint256 positionId, uint256 amount)
+        external
+        requirePosition(positionId)
+        requireOwnerOrOperator(ownerOf(positionId))
+    {
+        address pud = s_pud; //gas saving
+        Position storage s_position = s_positions[positionId];
+        amount = Math.min(amount, debtOfCore(s_position));
+        require(s_position.erc20Balances[pud] >= amount, "Bookkeeper: insufficient PUD balance");
+
+        uint256 principal = Math.min(amount, s_position.nominalDebt);
+        uint256 interest = Math.max(amount, principal) - principal;
+        withdrawERC20Core(s_position, pud, amount);
+        PUD(pud).burn(principal);
+        if (interest > 0) {
+            IERC20(pud).safeTransfer(s_treasurer, interest);
+        }
+        s_totalRealDebt -= s_position.removeDebt(amount, getInterestCumulative());
+
+        emit Repayment(msg.sender, positionId, principal, interest);
+    }
+
     function burn(uint256 positionId)
         external
         requirePosition(positionId)
@@ -155,8 +195,31 @@ contract Bookkeeper is ERC721 {
         _burn(positionId);
     }
 
+    function debtOf(uint256 positionId) external returns (uint256 debt) {
+        debt = debtOfCore(s_positions[positionId]);
+    }
+
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
         return this.onERC721Received.selector;
+    }
+
+    function depositERC20Core(Position storage s_position, address token, uint256 amount) private {
+        uint256 newBalance = s_erc20TotalBalances[token] + amount; //gas saving
+        require(IERC20(token).balanceOf(address(this)) >= newBalance, "Bookkeeper: insufficient ERC-20 deposit");
+
+        s_position.addERC20(token, amount);
+        s_erc20TotalBalances[token] = newBalance;
+    }
+
+    function withdrawERC20Core(Position storage s_position, address token, uint256 amount) private {
+        require(s_position.erc20Balances[token] >= amount, "Bookkeeper: insufficient token balance");
+
+        s_position.removeERC20(token, amount);
+        s_erc20TotalBalances[token] -= amount;
+    }
+
+    function debtOfCore(Position storage s_position) private returns (uint256 debt) {
+        debt = mulDiv18(s_position.realDebt, unwrap(getInterestCumulative()));
     }
 
     function getInterestCumulative() private returns (UD60x18 interestCumulative) {
@@ -166,7 +229,6 @@ contract Bookkeeper is ERC721 {
             s_interestCumulative = mul(s_interestCumulative, powu(s_REGISTRA.getInterestRate(), timeElapsed));
             s_lastBlockTimestamp = block.timestamp;
         }
-
         interestCumulative = s_interestCumulative;
     }
 }
