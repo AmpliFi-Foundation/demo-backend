@@ -112,6 +112,7 @@ contract Bookkeeper is ERC721 {
         requireNonzeroAddress(recipient)
     {
         Position storage s_position = s_positions[positionId];
+
         withdrawERC20Core(s_position, token, amount);
         IERC20(token).safeTransfer(recipient, amount);
         if (Address.isContract(msg.sender)) {

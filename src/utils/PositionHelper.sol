@@ -12,6 +12,7 @@ library PositionHelper {
 
     function addERC20(Position storage s_self, address token, uint256 amount) internal {
         uint256 oldBalance = s_self.erc20Balances[token]; //gas saving
+
         if (oldBalance == 0) {
             s_self.erc20Tokens.push(token);
         }
@@ -36,6 +37,7 @@ library PositionHelper {
 
     function removeERC20(Position storage s_self, address token, uint256 amount) internal {
         uint256 newBalance = s_self.erc20Balances[token] - amount; //gas saving
+
         s_self.erc20Balances[token] = newBalance;
         if (newBalance == 0) {
             s_self.erc20Tokens.remove(token);
@@ -54,6 +56,7 @@ library PositionHelper {
         returns (uint256 realAmount)
     {
         uint256 nominalDebt = s_self.nominalDebt; //gas saving
+
         realAmount = mulDiv(nominalAmount, uUNIT, unwrap(interestCumulative));
         s_self.realDebt -= realAmount;
         s_self.nominalDebt = nominalAmount >= nominalDebt ? 0 : nominalDebt - nominalAmount;
