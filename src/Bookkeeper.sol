@@ -13,6 +13,7 @@ import { IWithdrawERC721Callback } from "./interfaces/callbacks/IWithdrawERC721C
 import { TokenInfo, TokenType } from "./structs/TokenInfo.sol";
 import { Position, PositionHelper } from "./utils/PositionHelper.sol";
 import { PUD } from "./PUD.sol";
+import { Treasurer } from "./Treasurer.sol";
 import { Registra } from "./Registra.sol";
 
 contract Bookkeeper is ERC721 {
@@ -231,6 +232,15 @@ contract Bookkeeper is ERC721 {
 
     function debtOf(uint positionId) external returns (uint debt) {
         debt = debtOfCore(s_positions[positionId]);
+    }
+
+    function getERC20Stats(uint positionId)
+        external
+        view
+        returns (address[] memory tokens, uint[] memory amounts, uint[] memory values)
+    {
+        (tokens, amounts) = s_positions[positionId].getERC20s();
+        values = Treasurer(s_treasurer).valueOfERC20s(tokens, amounts);
     }
 
     function onERC721Received(address, address, uint, bytes calldata) external pure returns (bytes4) {
