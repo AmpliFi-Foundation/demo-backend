@@ -3,6 +3,7 @@ solc = "0.8.19"
 src = 'src'
 out = 'out'
 libs = ['lib']
+fs_permissions = [{ access = "read-write", path = "./env/"}]
 
 [fmt]
 line_length = 120

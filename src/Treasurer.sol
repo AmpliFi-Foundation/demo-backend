@@ -31,6 +31,14 @@ contract Treasurer {
         s_pud = s_REGISTRA.getPud();
     }
 
+    function createPUDUniswapV3Pool(address mid, uint160 sqrtPriceX96, uint24 fee) external returns(address pool) {
+        pool = s_FACTORY.getPool(s_pud, mid, fee);
+        require(pool == address(0), "pool already exists.");
+
+        pool = s_FACTORY.createPool(s_pud, mid, fee);
+        IUniswapV3Pool(pool).initialize(sqrtPriceX96);
+    }
+
     function priceOfPoolX96(address pool, address token0) internal view returns (uint) {
         if (pool == address(0)) return UniswapV3Math.Q96;
 
