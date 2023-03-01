@@ -11,8 +11,8 @@
 ## deploy contract to local development evm
 
 ```shell
-> chmod +x shell_scripts/01_deploy_to_local.sh
-> ./shell_scripts/01_deploy_to_local.sh
+> chmod +x shell_scripts/01_deploy_contract.sh
+> ./shell_scripts/01_deploy_contract.sh
 ```
 
 All deployed contract address can be found in `env/contract.env`.
@@ -55,4 +55,10 @@ Query position assets with follow command:
 ```shell
 > chmod +x shell_scripts/04_provide_liquidity.sh
 > ./shell_scripts/04_provide_liquidity.sh
+```
+
+## Set mining interval
+
+```shell
+> cast rpc evm_setIntervalMining 1
 ```
