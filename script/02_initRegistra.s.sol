@@ -30,21 +30,13 @@ contract InitRegistra is Script {
     function setTokenInfos(Registra registra) internal {
         address pud = vm.envAddress("AMP_PUD");
         address pudUsdcPool = vm.envAddress("PUD_USDC_POOL");
-        TokenInfo memory pudInf = TokenInfo({
-            enabled: true,
-            type_: TokenType.ERC20,
-            priceOracle: pudUsdcPool,
-            liquidationRatio: wrap(0.1e18)
-        });
+        TokenInfo memory pudInf =
+            TokenInfo({enabled: true, type_: TokenType.ERC20, priceOracle: pudUsdcPool, liquidationRatio: wrap(0)});
         registra.setTokenInfo(pud, pudInf);
 
         address usdc = vm.envAddress("USDC");
-        TokenInfo memory usdcInf = TokenInfo({
-            enabled: true,
-            type_: TokenType.ERC20,
-            priceOracle: address(0),
-            liquidationRatio: wrap(0.1e18)
-        });
+        TokenInfo memory usdcInf =
+            TokenInfo({enabled: true, type_: TokenType.ERC20, priceOracle: address(0), liquidationRatio: wrap(0.05e18)});
         registra.setTokenInfo(usdc, usdcInf);
 
         address dai = vm.envAddress("DAI");
@@ -52,26 +44,22 @@ contract InitRegistra is Script {
             enabled: true,
             type_: TokenType.ERC20,
             priceOracle: vm.parseAddress("0x6c6Bc977E13Df9b0de53b251522280BB72383700"),
-            liquidationRatio: wrap(0.1e18)
+            liquidationRatio: wrap(0.05e18)
         });
         registra.setTokenInfo(dai, daiInf);
 
         address weth9 = vm.envAddress("WETH9");
         TokenInfo memory weth9Inf = TokenInfo({
-            enabled:true,
+            enabled: true,
             type_: TokenType.ERC20,
             priceOracle: vm.parseAddress("0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640"),
-            liquidationRatio: wrap(0.5e18)
+            liquidationRatio: wrap(0.25e18)
         });
         registra.setTokenInfo(weth9, weth9Inf);
 
         address npm = vm.envAddress("UNISWAP_V3_NPM");
-        TokenInfo memory uniswapNFT = TokenInfo({
-            enabled: true,
-            type_: TokenType.ERC721,
-            priceOracle: address(0),
-            liquidationRatio: wrap(0)
-        });
+        TokenInfo memory uniswapNFT =
+            TokenInfo({enabled: true, type_: TokenType.ERC721, priceOracle: address(0), liquidationRatio: wrap(0)});
         registra.setTokenInfo(npm, uniswapNFT);
     }
 }

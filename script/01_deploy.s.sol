@@ -10,6 +10,8 @@ import { Treasurer } from "src/Treasurer.sol";
 import { UniswapV3Operator } from "src/UniswapV3Operator.sol";
 
 contract PUDExt is PUD {
+    constructor(string memory name, string memory symbol, address registra) PUD(name, symbol, registra) { }
+
     function testnet_mint(address to, uint amount) external {
         _mint(to, amount);
     }
