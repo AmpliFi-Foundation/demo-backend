@@ -237,10 +237,13 @@ contract Bookkeeper is ERC721 {
     function getERC20Stats(uint positionId)
         external
         view
-        returns (address[] memory tokens, uint[] memory amounts, uint[] memory values)
+        returns (address[] memory tokens, uint[] memory amounts, uint[] memory values, uint[] memory minEquities)
     {
         (tokens, amounts) = s_positions[positionId].getERC20s();
         values = Treasurer(s_treasurer).valueOfERC20s(tokens, amounts);
+        for (uint i = 0; i < tokens.length; i++) {
+            minEquities[i] = mulDiv18(values[i], unwrap(s_REGISTRA.tokenInfoOf(tokens[i]).liquidationRatio));
+        }
     }
 
     function onERC721Received(address, address, uint, bytes calldata) external pure returns (bytes4) {
