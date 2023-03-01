@@ -1,5 +1,4 @@
-set -o allexport && source env/fork-mainnet.env && set +o allexport
-forge script script/01_deploy.s.sol:Deploy --rpc-url=$LOCAL_ANVIL --private-key=$ANVIL_PK_0 --broadcast
+forge script script/01_Deploy.s.sol:Deploy --rpc-url='http://localhost:8545' --broadcast
 
 set -o allexport && source env/contracts.env && set +o allexport
-forge script script/02_initRegistra.s.sol:InitRegistra --rpc-url=$LOCAL_ANVIL --private-key=$ANVIL_PK_9 --broadcast
+forge script script/03_InitRegistra.s.sol:InitRegistra --rpc-url='http://localhost:8545' --broadcast

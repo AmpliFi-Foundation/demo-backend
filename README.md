@@ -49,3 +49,10 @@ Query position assets with follow command:
 >source env/contracts.env
 >cast call $AMP_BOOKKEEPER "getERC20Stats(uint)(address[],uint[],uint[],uint[])" 1
 ```
+
+## Provide liquidity to PUD/USDC pool
+
+```shell
+> chmod +x shell_scripts/04_provide_liquidity.sh
+> ./shell_scripts/04_provide_liquidity.sh
+```
