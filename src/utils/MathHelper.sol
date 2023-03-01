@@ -5,8 +5,11 @@ import { mulDiv } from "@prb-math/Common.sol";
 
 library MathHelper {
     function mulDivRoundUp(uint multiplicand, uint multiplier, uint denominator) internal pure returns (uint result) {
-        result =
-            mulDiv(multiplicand, multiplier, denominator) + mulmod(multiplicand, multiplier, denominator) > 0 ? 1 : 0;
+        result = mulDiv(multiplicand, multiplier, denominator);
+        if (mulmod(multiplicand, multiplier, denominator) > 0) {
+            require(result < type(uint).max);
+            result++;
+        }
     }
 
     function divRoundUp(uint numerator, uint denominator) internal pure returns (uint result) {
