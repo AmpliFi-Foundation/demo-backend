@@ -5,7 +5,7 @@ import { IERC20, SafeERC20 } from "@openzeppelin-contracts/token/ERC20/utils/Saf
 import { IERC721, ERC721 } from "@openzeppelin-contracts/token/ERC721/ERC721.sol";
 import { Address } from "@openzeppelin-contracts/utils/Address.sol";
 import { Math } from "@openzeppelin-contracts/utils/math/Math.sol";
-import { UD60x18, UNIT, unwrap, mul, mulDiv18, powu } from "@prb-math/UD60x18.sol";
+import { UD60x18, UNIT, unwrap, wrap, mul, mulDiv18, powu } from "@prb-math/UD60x18.sol";
 import { IBorrowCallback } from "./interfaces/callbacks/IBorrowCallback.sol";
 import { IWithdrawERC20Callback } from "./interfaces/callbacks/IWithdrawERC20Callback.sol";
 import { IWithdrawERC20sCallback } from "./interfaces/callbacks/IWithdrawERC20sCallback.sol";
@@ -273,9 +273,14 @@ contract Bookkeeper is ERC721 {
 
     function getInterestCumulative() private returns (UD60x18 interestCumulative) {
         uint timeElapsed = block.timestamp - s_lastBlockTimestamp;
+        UD60x18 interestRate = s_REGISTRA.getInterestRate();
+
+        if (interestRate.lt(UNIT)) {
+            interestRate = interestRate.add(UNIT);
+        }
 
         if (timeElapsed > 0) {
-            s_interestCumulative = mul(s_interestCumulative, powu(s_REGISTRA.getInterestRate(), timeElapsed));
+            s_interestCumulative = mul(s_interestCumulative, powu(interestRate, timeElapsed / 1000));
             s_lastBlockTimestamp = block.timestamp;
         }
         interestCumulative = s_interestCumulative;

@@ -20,7 +20,7 @@ contract InitRegistra is BaseScript1 {
     }
 
     function setInterestRate(Registra registra) internal {
-        // registra.setInterestRate(interestRate);
+        registra.setInterestRate(wrap(1e6));
     }
 
     function setPenaltyRate(Registra registra) internal { }
