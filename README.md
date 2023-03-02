@@ -57,6 +57,13 @@ Query position assets with follow command:
 > ./shell_scripts/04_provide_liquidity.sh
 ```
 
+## Approve operator
+
+```shell
+> chmod +x shell_scripts/05_approve_operator.sh
+> ./shell_scripts/05_approve_operator.sh
+```
+
 ## Set mining interval
 
 ```shell
