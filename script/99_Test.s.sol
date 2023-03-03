@@ -3,6 +3,9 @@ pragma solidity >=0.8.19;
 
 import "forge-std/Script.sol";
 
+import "@prb-math/SD59x18.sol" as SD59x18;
+import { UD60x18 } from "@prb-math/UD60x18.sol";
+
 import { BaseScript1 } from "./02_BaseScript1.s.sol";
 
 import { Registra } from "src/Registra.sol";
@@ -18,39 +21,35 @@ import { IERC20 } from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol"
 
 contract Swap is BaseScript1 {
     function run() external {
-        address usdc = vm.envAddress("USDC");
-        address dai = vm.envAddress("DAI");
 
-        Bookkeeper bk = Bookkeeper(vm.envAddress("AMP_BOOKKEEPER"));
-        IUniswapV3Operator operator = IUniswapV3Operator(vm.envAddress("AMP_UNISWAP_OPERATOR"));
+        Bookkeeper bk = Bookkeeper(bookkeeper);
+        IUniswapV3Operator op = IUniswapV3Operator(operator);
 
-        vm.startBroadcast(vm.envUint("ANVIL_PK_1"));
-        bk.setApprovalForAll(address(this), true);
-        bk.setApprovalForAll(address(operator), true);
+        vm.startBroadcast(anvilPk1);
+
+        bk.setApprovalForAll(address(op), true);
 
         IUniswapV3Operator.SwapExactInputSingleParams memory params = IUniswapV3Operator.SwapExactInputSingleParams({
             positionId: 1,
-            tokenIn: usdc,
-            tokenOut: dai,
-            fee: 100,
-            amountIn: 500000000,
+            tokenIn: PUDAddr,
+            tokenOut: USDC,
+            fee: 500,
+            amountIn: 100_000_000,
             amountOutMinimum: 0,
-            sqrtPriceLimitX96: 1 << 96
+            sqrtPriceLimitX96: uint160(5 * UniswapV3Math.Q96 / 10)
         });
 
-        uint amountOut = operator.swapExactInputSingle(params);
-        vm.stopBroadcast();
+        uint amountOut = op.swapExactInputSingle(params);
 
-        console.logBool(bk.isApprovedForAll(vm.envAddress("ANVIL_ADDR_1"), address(this)));
+        vm.stopBroadcast();
         console.logUint(amountOut);
     }
 }
 
 contract Test1 is BaseScript1 {
-    function run() external {
-        vm.startPrank(vm.parseAddress("0x075e72a5eDf65F0A5f44699c7654C1a76941Ddc8"));
-        IERC20(DAI).transfer(anvilAddr3, 100 ether);
-        vm.stopPrank();
-        console.logUint(IERC20(DAI).balanceOf(anvilAddr3));
+    function run() external view {
+        SD59x18.SD59x18 multipler = SD59x18.UNIT.add(SD59x18.wrap(-1e9));
+        console.logUint(UD60x18.unwrap(SD59x18.intoUD60x18(multipler)));
+        console.logUint(block.timestamp);
     }
 }

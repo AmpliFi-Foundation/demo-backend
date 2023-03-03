@@ -3,24 +3,18 @@ pragma solidity >=0.8.19;
 
 import "forge-std/Script.sol";
 
-import { PUD } from "src/PUD.sol";
-
-contract PUDExt is PUD {
-    constructor(string memory name, string memory symbol, address registra) PUD(name, symbol, registra) { }
-
-    function testnet_mint(address to, uint amount) external {
-        _mint(to, amount);
-    }
-}
-
 contract BaseScript0 is Script {
     address public uniswapFactory = vm.parseAddress("0x1F98431c8aD98523631AE4a59f267346ea31F984");
     address public uniswapNPM = vm.parseAddress("0xC36442b4a4522E871399CD717aBDD847Ab11FE88");
     address public uniswapSwapRouter = vm.parseAddress("0xE592427A0AEce92De3Edee1F18E0157C05861564");
+
     address public USDC = vm.parseAddress("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
     address public DAI = vm.parseAddress("0x6B175474E89094C44Da98b954EedeAC495271d0F");
-    address public BNB = vm.parseAddress("0xB8c77482e45F1F44dE1745F52C74426C631bDD52");
     address public WETH9 = vm.parseAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
+
+    // address public USDC = vm.parseAddress("0x07865c6E87B9F70255377e024ace6630C1Eaa37F"); // Goerli Testnet
+    // address public DAI = vm.parseAddress("0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844");
+    // address public WETH9 = vm.parseAddress("0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6");
 
     address public anvilAddr0 = vm.parseAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
     address public anvilAddr1 = vm.parseAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");

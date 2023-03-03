@@ -4,7 +4,7 @@ pragma solidity >=0.8.19;
 import "forge-std/Script.sol";
 
 import { BaseScript1 } from "./02_BaseScript1.s.sol";
-import { PUDExt } from "./00_BaseScript0.s.sol";
+import { PUD } from "src/PUD.sol";
 
 import { IUniswapV3Factory } from "src/interfaces/external/uniswap/IUniswapV3Factory.sol";
 import { IUniswapV3Pool } from "src/interfaces/external/uniswap/IUniswapV3Pool.sol";
@@ -18,7 +18,7 @@ contract ProvideLiquidity is BaseScript1 {
         broadcast(anvilPk2)
         returns (uint, uint128, uint, uint)
     {
-        PUDExt pud = PUDExt(PUDAddr);
+        PUD pud = PUD(PUDAddr);
         INonfungiblePositionManager NPM = INonfungiblePositionManager(uniswapNPM);
 
         uint24 fee = 500;

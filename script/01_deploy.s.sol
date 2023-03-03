@@ -2,17 +2,18 @@
 pragma solidity >=0.8.19;
 
 import "forge-std/Script.sol";
-import { BaseScript0, PUDExt } from "./00_BaseScript0.s.sol";
+import { BaseScript0 } from "./00_BaseScript0.s.sol";
 
 import { Registra } from "src/Registra.sol";
+import { PUD } from "src/PUD.sol";
 import { Bookkeeper } from "src/Bookkeeper.sol";
 import { Treasurer } from "src/Treasurer.sol";
 import { UniswapV3Operator } from "src/UniswapV3Operator.sol";
 
 contract Deploy is BaseScript0 {
     function run() external broadcast(anvilPk0) {
-        address registra = address(new Registra(anvilAddr9));
-        PUDExt pud = new PUDExt("Amplifi - PUD", "PUD", registra);
+        address registra = address(new Registra(anvilAddr2));
+        PUD pud = new PUD("Amplifi Testnet - PUD", "PUD", registra);
         Bookkeeper bookkeeper = new Bookkeeper("Amplifi NFT", "AMP", registra);
         Treasurer treasurer = new Treasurer(registra, uniswapNPM);
         UniswapV3Operator operator = new UniswapV3Operator(registra, address(bookkeeper), uniswapNPM, uniswapSwapRouter);
