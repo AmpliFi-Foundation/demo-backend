@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19;
 
-import {UD60x18} from "@prb-math/UD60x18.sol";
-import {TokenInfo} from "./structs/TokenInfo.sol";
-import {Stewardable} from "./utils/Stewardable.sol";
+import { UD60x18, UNIT } from "@prb-math/UD60x18.sol";
+import "@prb-math/SD59x18.sol" as SD59x18;
+import { TokenInfo } from "./structs/TokenInfo.sol";
+import { Stewardable } from "./utils/Stewardable.sol";
 
 contract Registra is Stewardable {
     address private s_bookkeeper;
     address private s_pud;
     address private s_treasurer;
-    UD60x18 private s_interestRate;
+    UD60x18 private s_interestRate = UNIT; // avoid to get zero ratio
     UD60x18 private s_penaltyRate;
     mapping(address => TokenInfo) private s_tokenInfos;
 
@@ -18,7 +19,7 @@ contract Registra is Stewardable {
         _;
     }
 
-    constructor(address steward) Stewardable(steward) {}
+    constructor(address steward) Stewardable(steward) { }
 
     function setBookkeeper(address bookkeeper) external requireZeroAddress(s_bookkeeper) {
         s_bookkeeper = bookkeeper;
@@ -32,8 +33,9 @@ contract Registra is Stewardable {
         s_treasurer = treasurer;
     }
 
-    function setInterestRate(UD60x18 interestRate) external requireSteward {
-        s_interestRate = interestRate;
+    function setInterestRate(SD59x18.SD59x18 interestRate) external requireSteward {
+        SD59x18.SD59x18 multipler = SD59x18.UNIT.add(interestRate);
+        s_interestRate = SD59x18.intoUD60x18(multipler);
     }
 
     function setPenaltyRate(UD60x18 penaltyRate) external requireSteward {
