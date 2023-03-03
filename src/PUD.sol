@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19;
 
-import {ERC20} from "@openzeppelin-contracts/token/ERC20/ERC20.sol";
-import {Registra} from "./Registra.sol";
+import { ERC20 } from "@openzeppelin-contracts/token/ERC20/ERC20.sol";
+import { Registra } from "./Registra.sol";
 
 contract PUD is ERC20 {
     Registra private immutable s_REGISTRA;
@@ -14,12 +14,24 @@ contract PUD is ERC20 {
         _;
     }
 
+    modifier testnet_requireSteward() {
+        uint id;
+        assembly {
+            id := chainid()
+        }
+        require(id != 1, "only works in testnet");
+
+        address steward = s_REGISTRA.getSteward();
+        require(steward == msg.sender, "only steward allowed");
+        _;
+    }
+
     constructor(string memory name, string memory symbol, address registra) ERC20(name, symbol) {
         s_REGISTRA = Registra(registra);
         s_REGISTRA.setPud(address(this));
     }
 
-    function decimals() public view virtual override returns(uint8) {
+    function decimals() public view virtual override returns (uint8) {
         return 6;
     }
 
@@ -28,11 +40,15 @@ contract PUD is ERC20 {
         s_treasurer = s_REGISTRA.getTreasurer();
     }
 
-    function mint(uint256 amount) external requireFinanciers {
+    function mint(uint amount) external requireFinanciers {
         _mint(msg.sender, amount);
     }
 
-    function burn(uint256 amount) external requireFinanciers {
+    function testnet_mint(address to, uint amount) external testnet_requireSteward {
+        _mint(to, amount);
+    }
+
+    function burn(uint amount) external requireFinanciers {
         _burn(msg.sender, amount);
     }
 }

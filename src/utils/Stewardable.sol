@@ -19,6 +19,10 @@ contract Stewardable {
         s_steward = steward;
     }
 
+    function getSteward() external view returns (address) {
+        return s_steward;
+    }
+
     function succeedSteward() external requireSuccessor {
         s_steward = s_successor;
         s_successor = address(0);
