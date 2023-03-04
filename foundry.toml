@@ -5,6 +5,9 @@ out = 'out'
 libs = ['lib']
 fs_permissions = [{ access = "read-write", path = "./env/"}]
 
+[rpc_endpoints]
+goerli = "${ALCHEMY_RPC_URL}"
+
 [fmt]
 line_length = 120
 tab_width = 4
