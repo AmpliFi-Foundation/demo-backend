@@ -15,12 +15,6 @@ contract PUD is ERC20 {
     }
 
     modifier testnet_requireSteward() {
-        uint id;
-        assembly {
-            id := chainid()
-        }
-        require(id != 1, "only works in testnet");
-
         address steward = s_REGISTRA.getSteward();
         require(steward == msg.sender, "only steward allowed");
         _;
@@ -31,9 +25,9 @@ contract PUD is ERC20 {
         s_REGISTRA.setPud(address(this));
     }
 
-    function decimals() public view virtual override returns (uint8) {
-        return 6;
-    }
+    // function decimals() public view virtual override returns (uint8) {
+    //     return 6;
+    // }
 
     function initialize() external {
         s_bookkeeper = s_REGISTRA.getBookkeeper();

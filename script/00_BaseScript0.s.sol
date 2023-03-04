@@ -3,6 +3,10 @@ pragma solidity >=0.8.19;
 
 import "forge-std/Script.sol";
 
+import { UD60x18, unwrap } from "@prb-math/UD60x18.sol";
+import { MathHelper } from "src/utils/MathHelper.sol";
+import { UniswapV3Math } from "src/utils/UniswapV3Math.sol";
+
 contract BaseScript0 is Script {
     address public uniswapFactory = vm.parseAddress("0x1F98431c8aD98523631AE4a59f267346ea31F984");
     address public uniswapNPM = vm.parseAddress("0xC36442b4a4522E871399CD717aBDD847Ab11FE88");
@@ -42,5 +46,13 @@ contract BaseScript0 is Script {
         vm.startBroadcast(privateKey);
         _;
         vm.stopBroadcast();
+    }
+
+    function toFixPoint96(UD60x18 from) internal pure returns (uint160) {
+        return uint160(MathHelper.mulDivRoundUp(unwrap(from), UniswapV3Math.Q96, 1e18));
+    }
+
+    function fromFixPoint96(uint160 from) internal pure returns (UD60x18) {
+        return UD60x18.wrap(MathHelper.mulDivRoundUp(from, 1e18, UniswapV3Math.Q96));
     }
 }

@@ -10,6 +10,8 @@ import { Bookkeeper } from "src/Bookkeeper.sol";
 import { Treasurer } from "src/Treasurer.sol";
 import { UniswapV3Operator } from "src/UniswapV3Operator.sol";
 
+import { UD60x18, sqrt } from "@prb-math/UD60x18.sol";
+
 contract Deploy is BaseScript0 {
     function run() external broadcast(anvilPk0) {
         address registra = address(new Registra(anvilAddr2));
@@ -21,7 +23,15 @@ contract Deploy is BaseScript0 {
         pud.initialize();
         bookkeeper.initialize();
         treasurer.initialize();
-        address pool = treasurer.createPUDUniswapV3Pool(USDC, 1 << 96, 500);
+
+        uint160 sqrtPriceX96;
+        if (address(pud) < USDC) {
+            sqrtPriceX96 = toFixPoint96(sqrt(UD60x18.wrap(1e6))); // price is 1e-12
+        } else {
+            sqrtPriceX96 = toFixPoint96(sqrt(UD60x18.wrap(1e30))); // price is 1e12
+        }
+
+        address pool = treasurer.createPUDUniswapV3Pool(USDC, sqrtPriceX96, 500);
 
         string memory file = "env/contracts.env";
         vm.writeFile(file, string.concat("AMP_REGISTRA=", vm.toString(address(registra))));

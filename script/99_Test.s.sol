@@ -4,7 +4,7 @@ pragma solidity >=0.8.19;
 import "forge-std/Script.sol";
 
 import "@prb-math/SD59x18.sol" as SD59x18;
-import { UD60x18 } from "@prb-math/UD60x18.sol";
+import { UD60x18, sqrt } from "@prb-math/UD60x18.sol";
 
 import { BaseScript1 } from "./02_BaseScript1.s.sol";
 
@@ -49,7 +49,12 @@ contract Swap is BaseScript1 {
 contract Test1 is BaseScript1 {
     function run() external view {
         SD59x18.SD59x18 multipler = SD59x18.UNIT.add(SD59x18.wrap(-1e9));
-        console.logUint(UD60x18.unwrap(SD59x18.intoUD60x18(multipler)));
-        console.logUint(block.timestamp);
+        UD60x18 t = sqrt(UD60x18.wrap(1e6));
+        uint160 f = toFixPoint96(t);
+        UD60x18 t1 = fromFixPoint96(f-1);
+
+        console.logUint(UD60x18.unwrap(t));
+        console.logUint(f);
+        console.logUint(UD60x18.unwrap(t1));
     }
 }
