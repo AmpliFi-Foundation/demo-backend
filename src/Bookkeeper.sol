@@ -189,7 +189,7 @@ contract Bookkeeper is ERC721 {
         address pud = s_pud; //gas saving
         Position storage s_position = s_positions[positionId];
 
-        s_totalRealDebt += s_position.addDebt(amount, getInterestCumulative());
+        s_totalRealDebt += s_position.addDebt(amount, updateInterestCumulative());
         PUD(pud).mint(amount);
         depositERC20Core(s_position, pud, amount);
         if (Address.isContract(msg.sender)) {
@@ -206,7 +206,7 @@ contract Bookkeeper is ERC721 {
     {
         address pud = s_pud; //gas saving
         Position storage s_position = s_positions[positionId];
-        amount = Math.min(amount, debtOfCore(s_position));
+        amount = Math.min(amount, mulDiv18(s_position.realDebt, unwrap(updateInterestCumulative())));
         require(s_position.erc20Balances[pud] >= amount, "Bookkeeper: insufficient PUD balance");
 
         uint principal = Math.min(amount, s_position.nominalDebt);
@@ -230,8 +230,8 @@ contract Bookkeeper is ERC721 {
         _burn(positionId);
     }
 
-    function debtOf(uint positionId) external returns (uint debt) {
-        debt = debtOfCore(s_positions[positionId]);
+    function debtOf(uint positionId) external view returns (uint debt) {
+        debt = mulDiv18(s_positions[positionId].realDebt, unwrap(getInterestCumulative()));
     }
 
     function getERC20Stats(uint positionId)
@@ -267,17 +267,17 @@ contract Bookkeeper is ERC721 {
         s_erc20TotalBalances[token] -= amount;
     }
 
-    function debtOfCore(Position storage s_position) private returns (uint debt) {
-        debt = mulDiv18(s_position.realDebt, unwrap(getInterestCumulative()));
+    function updateInterestCumulative() private returns (UD60x18 interestCumulative) {
+        interestCumulative = getInterestCumulative();
+        s_interestCumulative = interestCumulative;
+        s_lastBlockTimestamp = block.timestamp;
     }
 
-    function getInterestCumulative() private returns (UD60x18 interestCumulative) {
+    function getInterestCumulative() private view returns (UD60x18 interestCumulative) {
         uint timeElapsed = block.timestamp - s_lastBlockTimestamp;
 
-        if (timeElapsed > 0) {
-            s_interestCumulative = mul(s_interestCumulative, powu(s_REGISTRA.getInterestRate(), timeElapsed));
-            s_lastBlockTimestamp = block.timestamp;
-        }
-        interestCumulative = s_interestCumulative;
+        interestCumulative = timeElapsed == 0
+            ? s_interestCumulative
+            : mul(s_interestCumulative, powu(s_REGISTRA.getInterestRate(), timeElapsed));
     }
 }
