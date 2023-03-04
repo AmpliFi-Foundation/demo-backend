@@ -1,6 +1,24 @@
 # Amplifi demo backend
 
-## Setup a local development evm
+## Goerli testnet
+
+Depolyment information can be found in goerli branch.
+
+## Local development
+
+Required dependency
+    - foundry
+    - solidity 0.8.19
+
+After install dependency, run following command to install all library:
+
+```shell
+demo-backend > forge install
+```
+
+## Run local fork-mainnet anvil node
+
+An `INFURA_KEY` is needed to fork the mainnet, following command start a local anvil node.
 
 ```shell
 > export INFURA_KEY=<infura_mainnet_api_secrets>
@@ -8,7 +26,7 @@
 > ./shell_scripts/00_run_anvil.sh
 ```
 
-## deploy contract to local development evm
+## Deploy contract to local development evm
 
 ```shell
 > chmod +x shell_scripts/01_deploy_contract.sh
@@ -17,7 +35,7 @@
 
 All deployed contract address can be found in `env/contract.env`.
 
-All anvil develop accounts and contract address will be exported as environment variables in current shell. Variable names can be found in files in `env` directory. steward address of registra was set to `$ANVIL_ADDR_9`
+All anvil develop accounts and contract address will be exported as environment variables in current shell. Variable names can be found in files in `env` directory. steward address of registra was set to `$ANVIL_ADDR_2`
 
 ## Impersonate account and transfer USDC and DAI to test account
 
@@ -64,7 +82,7 @@ Query position assets with follow command:
 > ./shell_scripts/05_approve_operator.sh
 ```
 
-## Set mining interval
+## Set anvil node mining interval
 
 ```shell
 > cast rpc evm_setIntervalMining 1
